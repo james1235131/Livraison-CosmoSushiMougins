@@ -1,1 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Suivi de votre commande</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <h1>Suivi de votre commande</h1>
+  <p>Commande n°: <span id="order-number"></span></p>
+  <div id="status"></div>
+
+  <!-- Intégration du SDK Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script>
+    // Récupérer le numéro de commande depuis l'URL
+    const params = new URLSearchParams(window.location.search);
+    const orderNumber = params.get('order');
+    document.getElementById('order-number').innerText = orderNumber;
+
+    // Écouter les mises à jour de la commande dans Firebase
+    firebase.firestore().collection("orders").doc(orderNumber)
+      .onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.status === "livrée") {
+            document.getElementById('status').innerText = "Votre commande a bien été livrée, bon appétit.";
+          } else if (data.status === "en livraison") {
+            document.getElementById('status').innerText = "Votre commande est en cours de livraison.";
+          } else {
+            document.getElementById('status').innerText = "Statut de la commande inconnu.";
+          }
+        } else {
+          document.getElementById('status').innerText = "Commande non trouvée.";
+        }
+      });
+  </script>
+</body>
+</html>
 
