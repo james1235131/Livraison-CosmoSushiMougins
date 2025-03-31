@@ -1,1 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Suivi de livraison</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <h1>Suivi de livraison</h1>
+  <p>Commande n°: <span id="order-number"></span></p>
+  <label for="clientPhone">Numéro de téléphone du client :</label>
+  <input type="tel" id="clientPhone" placeholder="06XXXXXXXX">
+  <br><br>
+  <button id="inDelivery">En livraison</button>
+  <button id="delivered">Commande livrée</button>
+
+  <!-- Intégration du SDK Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script>
+    // Récupérer le numéro de commande depuis l'URL
+    const params = new URLSearchParams(window.location.search);
+    const orderNumber = params.get('order');
+    document.getElementById('order-number').innerText = orderNumber;
+
+    // Fonction pour le bouton "En livraison"
+    document.getElementById('inDelivery').addEventListener('click', function() {
+      const phone = document.getElementById('clientPhone').value;
+      if (!phone) {
+        alert("Veuillez renseigner le numéro de téléphone du client.");
+        return;
+      }
+      // Mettre à jour le statut de la commande dans Firebase
+      firebase.firestore().collection("orders").doc(orderNumber).set({
+        phone: phone,
+        status: "en livraison"
+      }, { merge: true })
+      .then(() => {
+        const smsMessage = encodeURIComponent(
+          `Votre commande ${orderNumber} part du restaurant. Suivez votre livraison ici : https://votredomaine.com/tracking.html?order=${orderNumber}`
+        );
+        window.location.href = `sms:${phone}?body=${smsMessage}`;
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la mise à jour Firebase: ", error);
+      });
+    });
+
+    // Fonction pour le bouton "Commande livrée"
+    document.getElementById('delivered').addEventListener('click', function() {
+      firebase.firestore().collection("orders").doc(orderNumber).set({
+        status: "livrée"
+      }, { merge: true })
+      .then(() => {
+        alert("La commande est marquée comme livrée.");
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la mise à jour Firebase: ", error);
+      });
+    });
+  </script>
+</body>
+</html>
 
